@@ -21,7 +21,7 @@ except IOError:
     long_description = None  # Install without README.rst
 
 setup(name='elastic2-doc-manager',
-      version='0.1.0',
+      version='0.2.0',
       maintainer='mongodb',
       description='Elastic2 plugin for mongo-connector',
       long_description=long_description,
@@ -29,7 +29,7 @@ setup(name='elastic2-doc-manager',
       author='anna herlihy',
       author_email='mongodb-user@googlegroups.com',
       url='https://github.com/mongodb-labs/elastic2-doc-manager',
-      install_requires=['mongo-connector >= 2.3.0', "elasticsearch>=2.0.0,<3.0.0"],
+      install_requires=['mongo-connector >= 2.3.0', "elasticsearch>=2.0.0,<3.0.0", "requests-aws4auth >= 0.8"],
       packages=["mongo_connector", "mongo_connector.doc_managers"],
       license="Apache License, Version 2.0",
       classifiers=[

@@ -25,8 +25,9 @@ from threading import Timer
 
 import bson.json_util
 
-from elasticsearch import Elasticsearch, exceptions as es_exceptions
+from elasticsearch import Elasticsearch, RequestsHttpConnection, exceptions as es_exceptions
 from elasticsearch.helpers import bulk, scan, streaming_bulk
+from requests_aws4auth import AWS4Auth
 
 from mongo_connector import errors
 from mongo_connector.compat import u
@@ -56,8 +57,7 @@ class DocManager(DocManagerBase):
                  unique_key='_id', chunk_size=DEFAULT_MAX_BULK,
                  meta_index_name="mongodb_meta", meta_type="mongodb_meta",
                  attachment_field="content", **kwargs):
-        self.elastic = Elasticsearch(
-            hosts=[url], **kwargs.get('clientOptions', {}))
+        self.elastic = self._create_elasticsearch_client(url, kwargs.get('clientOptions', {}))
         self.auto_commit_interval = auto_commit_interval
         self.meta_index_name = meta_index_name
         self.meta_type = meta_type
@@ -69,6 +69,30 @@ class DocManager(DocManagerBase):
 
         self.has_attachment_mapping = False
         self.attachment_field = attachment_field
+
+    def _create_elasticsearch_client(self, url, client_options):
+        aws_options = client_options.pop('aws', None)
+        if aws_options is None:
+            LOG.info("Connecting without AWS auth")
+            elastic = Elasticsearch(hosts=[url], **client_options)
+            return elastic
+
+        LOG.info("Connecting with AWS auth")
+        aws_auth = self.create_aws_auth(aws_options)
+        elastic = Elasticsearch(
+            hosts=[url],
+            http_auth=aws_auth,
+            connection_class=RequestsHttpConnection)
+        return elastic
+
+    @staticmethod
+    def create_aws_auth(aws_options):
+        aws_auth = AWS4Auth(
+            aws_options.get('accessKeyId'),
+            aws_options.get('secretAccessKey'),
+            aws_options.get('region'),
+            'es')
+        return aws_auth
 
     def _index_and_mapping(self, namespace):
         """Helper method for getting the index and type from a namespace."""
