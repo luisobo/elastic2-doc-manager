@@ -20,6 +20,7 @@ Elasticsearch.
 import base64
 import logging
 import warnings
+import certifi
 
 from threading import Timer
 
@@ -74,7 +75,7 @@ class DocManager(DocManagerBase):
         aws_options = client_options.pop('aws', None)
         if aws_options is None:
             LOG.info("Connecting without AWS auth")
-            elastic = Elasticsearch(hosts=[url], **client_options)
+            elastic = Elasticsearch(hosts=[url], ca_certs=certifi.where(), **client_options)
             return elastic
 
         LOG.info("Connecting with AWS auth")
@@ -82,7 +83,8 @@ class DocManager(DocManagerBase):
         elastic = Elasticsearch(
             hosts=[url],
             http_auth=aws_auth,
-            connection_class=RequestsHttpConnection)
+            ca_certs=certifi.where(),
+            connection_class=RequestsHttpConnection, **client_options)
         return elastic
 
     @staticmethod
