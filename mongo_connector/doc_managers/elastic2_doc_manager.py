@@ -155,7 +155,6 @@ class DocManager(DocManagerBase):
         """Apply updates given in update_spec to the document whose id
         matches that of doc.
         """
-        self.commit()
         index, doc_type = self._index_and_mapping(namespace)
         document = self.elastic.get(index=index, doc_type=doc_type,
                                     id=u(document_id))
